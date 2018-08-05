@@ -1,0 +1,7 @@
+[package]
+name = "actions"
+version = "0.0.1"
+authors = ["Xoronic"]
+
+[dev-dependencies]
+rand = "0.5.4"

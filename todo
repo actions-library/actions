@@ -1,0 +1,20 @@
+- [ ] API
+    - [x] Expose a function for getting the amount of undo's possible.
+    - [x] Expose a function for getting the amount of redo's possible.
+    - [ ] Require a description for actions?
+    - [ ] Make timeline serializable?
+- [x] Errors
+    - [x] Make actions return errors! and options
+    - [x] Return meaningful errors about not being able to redo or undo.
+- [ ] Documentation
+    - [x] Document every function.
+    - [x] Test-compile examples.
+    - [ ] Write an interesting readme (why using this library?, no unsafe code!)
+- [x] Tests
+    - [x] Write smaller tests (which test for a specific feature).
+- [x] Code quality
+    - [x] Separate the library into modules.
+    - [x] Check lib using clippy.
+- [ ] Feedback
+    - [ ] Ask for feedback on Reddit.
+    - [ ] Improve library.
