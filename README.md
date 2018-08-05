@@ -36,9 +36,9 @@ The user can enter an operation (increment or decrement) an a value. The user co
 We can use an enum to represent those actions.
 
 ```rust
-enum CounterAction {
-    IncrementBy(i32),
-    DecrementBy(i32)
+enum MyAction {
+    Add(u8),
+    Subtract(u8)
 }
 ```
 
@@ -48,9 +48,9 @@ We just **record the actions and store them**. If the user wants to perform all 
 
 ```rust
 let actions = vec![
-    CounterAction::IncrementBy(5),
-    CounterAction::DecrementBy(4),
-    CounterAction::IncrementBy(3)
+    MyAction::Add(5),
+    MyAction::Subtract(4),
+    MyAction::Add(3)
 ];
 ```
 
@@ -59,33 +59,33 @@ let actions = vec![
 
 ```rust
 impl Merge for Action {
-    fn merge(&self, previous: &CounterAction) -> MergeResult<Self> {
+    fn merge(&self, previous: &MyAction) -> MergeResult<Self> {
         match self {
             // If the current action is incrementing by val
-            CounterAction::IncrementBy(val) => match previous {
+            MyAction::Add(val) => match previous {
                 // If the previous action was decrementing by val2
-                CounterAction::DecrementBy(val2) => 
+                MyAction::Subtract(val2) => 
                     // Then return a new 'merged' action which
                     // increments by (val - val2)
                     MergeResult::Merged(
-                        CounterAction::IncrementBy(val - val2)
+                        MyAction::Add(val - val2)
                     ),
                 // Etc..
-                CounterAction::IncrementBy(val2) =>
+                MyAction::IncrementBy(val2) =>
                     MergeResult::Merged(
-                        CounterAction::IncrementBy(val + val2)
+                        MyAction::Add(val + val2)
                     ),
             },
 
-            CounterAction::DecrementBy(val) => match previous {
-                CounterAction::IncrementBy(val2) =>
+            MyAction::DecrementBy(val) => match previous {
+                MyAction::IncrementBy(val2) =>
                     MergeResult::Merged(
-                        CounterAction::IncrementBy(val2 - val)
+                        MyAction::Add(val2 - val)
                     ),
                 
-                CounterAction::DecrementBy(val2) =>
+                MyAction::DecrementBy(val2) =>
                     MergeResult::Merged(
-                        CounterAction::DecrementBy(val + val2)
+                        MyAction::Subtract(val + val2)
                     )
             },
         }
@@ -93,6 +93,6 @@ impl Merge for Action {
 }
 ```
 
-**Please note that this merge is not the optimal solution.**, because it is possible to end up with either `CounterAction::IncrementBy(0)` or `CounterAction::DecrementBy(0)`, which could be entirely removed.
+**Please note that this merge is not the optimal solution.**, because it is possible to end up with either `CounterAction::Add(0)` or `CounterAction::Subtract(0)`, which could be entirely removed.
 
 To solve that issue, you can return other `MergeResult`s. You can return `MergeResult::CancelsOut`, for example. You can read more about the different `MergeResult`s in the documentation.
