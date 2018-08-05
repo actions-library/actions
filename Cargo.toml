@@ -1,7 +1,14 @@
 [package]
 name = "actions"
+description = "Software without side-effects. Redo and Undo. Macro's. "
+readme = "README.md"
 version = "0.0.1"
 authors = ["Xoronic"]
+categories = ["data-structures"]
+homepage = "https://github.com/actions-library/actions/"
+repository = "https://github.com/actions-library/actions/"
+keywords = ["actions", "redo", "undo", "merge", "redux"]
+license = "MIT"
 
 [dev-dependencies]
 rand = "0.5.4"
