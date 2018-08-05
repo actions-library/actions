@@ -1,4 +1,7 @@
 # Actions
+![actions](https://docs.rs/actions/badge.svg)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/actions-library/actions.rs/master/LICENSE)
+
 Software without side-effects. Redo and Undo. Macro's.
 
 No unsafe blocks!
