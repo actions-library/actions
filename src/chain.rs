@@ -1,17 +1,15 @@
 use action::{Merge, MergeResult};
-use std::error::Error;
-use std::fmt;
 
-#[derive(Debug)]
-pub enum ChainError {}
+// #[derive(Debug)]
+// pub enum ChainError {}
 
-impl Error for ChainError {}
+// impl Error for ChainError {}
 
-impl fmt::Display for ChainError {
-    fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {}
-    }
-}
+// impl fmt::Display for ChainError {
+//     fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
+//         match *self {}
+//     }
+// }
 
 /// A chain of actions.
 ///
@@ -40,7 +38,7 @@ impl<Action: Merge> Chain<Action> {
     pub fn compress(&mut self) {
         /* 
             TODO: improve algorithm! Right now, it is more like a proof of concept.
-            The whole content of this funciton is nasty!
+            The whole content of this function is nasty!
             
             Optimizations:
                 - Check for the index of the last 'Overwrites' result first 

@@ -2,7 +2,7 @@
 name = "actions"
 description = "Software without side-effects. Redo and Undo. Macro's. "
 readme = "README.md"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Xoronic"]
 categories = ["data-structures"]
 homepage = "https://github.com/actions-library/actions/"

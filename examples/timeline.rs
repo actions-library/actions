@@ -1,6 +1,6 @@
 extern crate actions;
 
-use actions::Reduce;
+use actions::Component;
 use actions::{Error, Timeline};
 
 #[derive(Default, Clone)]
@@ -15,10 +15,10 @@ enum CounterAction {
     SetValue(i32),
 }
 
-impl Reduce for Counter {
+impl Component for Counter {
     type Action = CounterAction;
 
-    fn apply_action(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error> {
+    fn apply(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error> {
         let inverse = match action {
             CounterAction::Increment => {
                 self.value += 1;

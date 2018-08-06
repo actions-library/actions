@@ -1,7 +1,7 @@
 extern crate actions;
 
 use actions::Error;
-use actions::Reduce;
+use actions::Component;
 use actions::{Merge, MergeResult};
 
 #[derive(Default, Clone)]
@@ -40,10 +40,10 @@ impl Merge for CounterAction {
     }
 }
 
-impl Reduce for Counter {
+impl Component for Counter {
     type Action = CounterAction;
 
-    fn apply_action(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error> {
+    fn apply(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error> {
         let inverse = match action {
             CounterAction::Increment => {
                 self.value += 1;
@@ -73,10 +73,10 @@ impl Reduce for Counter {
 
 fn manipulate_counter() -> Result<(), Error> {
     let mut c = Counter::default();
-    c.apply_action(&CounterAction::SetValue(5))?;
-    c.apply_action(&CounterAction::Increment)?;
-    c.apply_action(&CounterAction::Increment)?;
-    c.apply_action(&CounterAction::Decrement)?;
+    c.apply(&CounterAction::SetValue(5))?;
+    c.apply(&CounterAction::Increment)?;
+    c.apply(&CounterAction::Increment)?;
+    c.apply(&CounterAction::Decrement)?;
     assert_eq!(c.value, 6);
 
     Ok(())

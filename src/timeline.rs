@@ -1,7 +1,7 @@
 use action::Merge;
 use chain::Chain;
 use error::ActionsError;
-use state::{Reduce, ReduceError};
+use component::{Component, ApplyError};
 use std::error::Error;
 use std::fmt;
 
@@ -29,7 +29,7 @@ impl fmt::Display for TimelineError {
 /// Wraps data and makes it accessible by using actions only.
 ///
 /// Allows for undoing and redoing.
-pub struct Timeline<T: Reduce> {
+pub struct Timeline<T: Component> {
     item: T,
     action_stack: Vec<T::Action>,
     inv_action_stack: Vec<T::Action>,
@@ -37,7 +37,7 @@ pub struct Timeline<T: Reduce> {
     max_index: i32,
 }
 
-impl<T: Reduce> Timeline<T> {
+impl<T: Component> Timeline<T> {
     /// Create a new timeline which wraps an *item*.
     ///
     /// # Arguments
@@ -64,9 +64,9 @@ impl<T: Reduce> Timeline<T> {
     /// A result containing either an empty `Ok` or an error which occured during applying.
     pub fn apply(&mut self, action: &T::Action) -> Result<(), ActionsError> {
         // Increase the index of the current action.
-        let action_inverse = match self.item.apply_action(action) {
+        let action_inverse = match self.item.apply(action) {
             Ok(action) => action,
-            Err(e) => return Err(ReduceError(Box::new(e)).into()),
+            Err(e) => return Err(ApplyError(Box::new(e)).into()),
         };
 
         // If a state-change was commited
@@ -101,7 +101,7 @@ impl<T: Reduce> Timeline<T> {
     /// A result containing either an empty `Ok` or an error.
     pub fn apply_chain(&mut self, chain: Chain<T::Action>) -> Result<(), ActionsError>
     where
-        <T as Reduce>::Action: Merge,
+        <T as Component>::Action: Merge,
     {
         for action in chain.actions() {
             self.apply(action)?;
@@ -125,9 +125,9 @@ impl<T: Reduce> Timeline<T> {
         // Get a reference to the undo-action and apply it.
         let action_undo = &self.inv_action_stack[self.action_index as usize];
 
-        match self.item.apply_action(action_undo) {
+        match self.item.apply(action_undo) {
             Ok(_) => (),
-            Err(err) => return Err(ReduceError(Box::new(err)).into()),
+            Err(err) => return Err(ApplyError(Box::new(err)).into()),
         };
 
         self.action_index -= 1;
@@ -146,9 +146,9 @@ impl<T: Reduce> Timeline<T> {
         // Get a reference to the redo-action.
         let action_redo = &self.action_stack[self.action_index as usize];
 
-        match self.item.apply_action(action_redo) {
+        match self.item.apply(action_redo) {
             Ok(_) => Ok(()),
-            Err(err) => Err(ReduceError(Box::new(err)).into()),
+            Err(err) => Err(ApplyError(Box::new(err)).into()),
         }
     }
 

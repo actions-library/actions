@@ -3,10 +3,10 @@ extern crate actions;
 mod helpers;
 use helpers::counter::*;
 
-use actions::Reduce;
+use actions::Component;
 
 #[test]
-fn reduce() {
+fn apply() {
     let mut reverse_stack = vec![];
 
     let mut c = Counter::default();
@@ -15,7 +15,7 @@ fn reduce() {
     let execute =
         |stack: &mut Vec<CounterAction>, counter: &mut Counter, action: &CounterAction| {
             {
-                stack.push(counter.apply_action(action).unwrap().unwrap())
+                stack.push(counter.apply(action).unwrap().unwrap())
             }
         };
 
@@ -25,10 +25,10 @@ fn reduce() {
     execute(&mut reverse_stack, &mut c, &CounterAction::Decrement);
     assert_eq!(c.value, 0);
 
-    c.apply_action(&reverse_stack.pop().unwrap()).unwrap();
+    c.apply(&reverse_stack.pop().unwrap()).unwrap();
     assert_eq!(c.value, 1);
 
-    c.apply_action(&reverse_stack.pop().unwrap()).unwrap();
+    c.apply(&reverse_stack.pop().unwrap()).unwrap();
     assert_eq!(c.value, 0);
 
     execute(&mut reverse_stack, &mut c, &CounterAction::SetValue(10));
@@ -37,9 +37,9 @@ fn reduce() {
     execute(&mut reverse_stack, &mut c, &CounterAction::SetValue(5));
     assert_eq!(c.value, 5);
 
-    c.apply_action(&reverse_stack.pop().unwrap()).unwrap();
+    c.apply(&reverse_stack.pop().unwrap()).unwrap();
     assert_eq!(c.value, 10);
 
-    c.apply_action(&reverse_stack.pop().unwrap()).unwrap();
+    c.apply(&reverse_stack.pop().unwrap()).unwrap();
     assert_eq!(c.value, 0);
 }

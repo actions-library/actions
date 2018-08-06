@@ -16,9 +16,9 @@
 mod error;
 pub use error::ActionsError as Error;
 
-/// A state describes (a part of) the state of a program at any given moment in time.
-mod state;
-pub use state::Reduce;
+/// A component describes (a part of) the state of a program at any given moment in time.
+mod component;
+pub use component::Component;
 
 mod timeline;
 pub use timeline::Timeline;

@@ -1,4 +1,4 @@
-use state::ReduceError;
+use component::ApplyError;
 use std::error::Error;
 use std::fmt;
 use timeline::TimelineError;
@@ -8,24 +8,24 @@ use timeline::TimelineError;
 pub enum ActionsError {
     /// An error caused by a timeline.
     Timeline(TimelineError),
-    /// An error caused by updating a state.
-    Reduce(ReduceError),
+    /// An error caused by applying an action.
+    Apply(ApplyError),
 }
 
 impl fmt::Display for ActionsError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ActionsError::Timeline(ref err) => err.fmt(f),
-            ActionsError::Reduce(ref err) => err.fmt(f),
+        match self {
+            ActionsError::Timeline(err) => err.fmt(f),
+            ActionsError::Apply(err) => err.fmt(f),
         }
     }
 }
 
 impl Error for ActionsError {
     fn cause(&self) -> Option<&dyn Error> {
-        match *self {
-            ActionsError::Timeline(ref err) => Some(err),
-            ActionsError::Reduce(ref err) => Some(err),
+        match self {
+            ActionsError::Timeline(err) => Some(err),
+            ActionsError::Apply(err) => Some(err),
         }
     }
 }
@@ -36,8 +36,8 @@ impl From<TimelineError> for ActionsError {
     }
 }
 
-impl From<ReduceError> for ActionsError {
-    fn from(err: ReduceError) -> ActionsError {
-        ActionsError::Reduce(err)
+impl From<ApplyError> for ActionsError {
+    fn from(err: ApplyError) -> ActionsError {
+        ActionsError::Apply(err)
     }
 }

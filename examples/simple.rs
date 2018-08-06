@@ -1,54 +1,51 @@
 extern crate actions;
 
+use actions::Component;
 use actions::Error;
-use actions::Reduce;
 
-#[derive(Default, Clone)]
-struct Counter {
-    value: i32,
-}
+struct Counter(i32);
 
 #[derive(Clone)]
 enum CounterAction {
     Increment,
     Decrement,
-    SetValue(i32),
 }
 
-impl Reduce for Counter {
+impl Component for Counter {
+    // Define what actions influence this component
     type Action = CounterAction;
 
-    fn apply_action(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error> {
-        let inverse = match action {
+    // The function that applies the action!
+    // This is where the magic happens.
+    fn apply(&mut self, action: &CounterAction) -> Result<Option<Self::Action>, Error> {
+        match action {
             CounterAction::Increment => {
-                self.value += 1;
-                Some(CounterAction::Decrement)
+                self.0 += 1;
+                Ok(Some(CounterAction::Decrement))
             }
             CounterAction::Decrement => {
-                self.value -= 1;
-                Some(CounterAction::Increment)
+                self.0 -= 1;
+                Ok(Some(CounterAction::Increment))
             }
-            CounterAction::SetValue(val) => {
-                let old_value = self.value;
-                self.value = *val;
-                Some(CounterAction::SetValue(old_value))
-            }
-        };
-        Ok(inverse)
+        }
     }
 }
 
-fn manipulate_counter() -> Result<(), Error> {
-    let mut c = Counter::default();
-    c.apply_action(&CounterAction::SetValue(5))?;
-    c.apply_action(&CounterAction::Increment)?;
-    c.apply_action(&CounterAction::Increment)?;
-    c.apply_action(&CounterAction::Decrement)?;
-    assert_eq!(c.value, 6);
+fn test() -> Result<(), Error> {
+    // Create a new counter with an initial value of 0.
+    let mut counter = Counter(0);
 
+    counter.apply(&CounterAction::Increment)?;
+    assert_eq!(counter.0, 1);
+
+    counter.apply(&CounterAction::Increment)?;
+    assert_eq!(counter.0, 2);
+
+    counter.apply(&CounterAction::Decrement)?;
+    assert_eq!(counter.0, 1);
     Ok(())
 }
 
-fn main() {
-    manipulate_counter().unwrap();
+pub fn main() {
+    test().unwrap();
 }

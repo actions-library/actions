@@ -1,0 +1,294 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Example: Counter - </title>
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body class="light">
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">var path_to_root = "";</script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { } 
+            if (theme === null || theme === undefined) { theme = 'light'; }
+            document.body.className = theme;
+            document.querySelector('html').className = theme + ' js';
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <ol class="chapter"><li><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> What are actions?</a></li><li><ol class="section"><li><a href="example_1.html" class="active"><strong aria-hidden="true">1.1.</strong> Example: Counter</a></li></ol></li><li><a href="chapter_2.html"><strong aria-hidden="true">2.</strong> Chapter 2 - A chain of actions</a></li><li><a href="chapter_3.html"><strong aria-hidden="true">3.</strong> Chapter 3 - Merging actions</a></li></ol>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar" class="menu-bar">
+                    <div id="menu-bar-sticky-container">
+                        <div class="left-buttons">
+                            <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                                <i class="fa fa-paint-brush"></i>
+                            </button>
+                            <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                                <li role="none"><button role="menuitem" class="theme" id="light">Light <span class="default">(default)</span></button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                                <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                            </ul>
+                            
+                            <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                                <i class="fa fa-search"></i>
+                            </button>
+                            
+                        </div>
+
+                        <h1 class="menu-title"></h1> 
+
+                        <div class="right-buttons">
+                            <a href="print.html" title="Print this book" aria-label="Print this book">
+                                <i id="print-button" class="fa fa-print"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <a class="header" href="#counter" id="counter"><h1>Counter</h1></a>
+<p>This tutorial will introduce the two most important concepts of the <code>actions</code> library:</p>
+<p>A <strong>component</strong> describes (a part) of the state of an application.<br>
+<strong>Actions</strong> describe how the state of an application should change.</p>
+<a class="header" href="#some-setup" id="some-setup"><h4>Some setup</h4></a>
+<p>First make sure you are using the <code>actions</code> crate. Make sure to have <code>actions</code> as a dependency in your <code>Cargo.toml</code> file. If you are unfamiliar with Cargo, check out the <a href="https://doc.rust-lang.org/cargo/index.html">Cargo book</a>).</p>
+<pre><code class="language-toml">[dependencies]
+actions = &quot;0.0.2&quot;
+</code></pre>
+<p>Then make sure to specify <code>actions</code> as a dependency in your project, and import the <code>Component</code> trait. We will also need action's <code>Error</code>.</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+extern crate actions;
+
+use actions::Component;
+use actions::Error;
+#}</code></pre></pre>
+<a class="header" href="#building-the-counter" id="building-the-counter"><h2>Building the counter</h2></a>
+<p>One of the easiest examples for explaining <code>actions</code> is a counter. The counter has two buttons: an decrement button, and an increment button.</p>
+<p><img src="./counter.svg" style="width:100%" alt="An example of what a counter in an application might look like"></img></p>
+<p>Our task is to write the logic for the counter. Easy!</p>
+<a class="header" href="#step-one-defining-the-component" id="step-one-defining-the-component"><h3>Step one: Defining the component</h3></a>
+<p>One of the most important aspect of the counter is storing the value displayed in the counter. We will use an integer to store the value.</p>
+<p>As the counter holds just one value, it can be described like this:</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+struct Counter(i32);
+#}</code></pre></pre>
+<a class="header" href="#step-two-the-actions" id="step-two-the-actions"><h3>Step two: The actions</h3></a>
+<p>Maybe even more important than the counter are the two buttons.</p>
+<p>The decrement button should decrement the counter by 1, and the increment button should increment the counter by 1.</p>
+<p>Incrementing and decrementing are <strong>actions</strong>. It is immediately clear how executing those actions influences the <strong>component</strong> and therefore the state of the application.</p>
+<p>Let's convert these actions into Rust-code.</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+#[derive(Clone)]
+enum CounterAction {
+    Increment,
+    Decrement,
+}
+#}</code></pre></pre>
+<p>That's it! You've defined your actions.</p>
+<a class="header" href="#step-three-defining-the-behaviour-of-the-component" id="step-three-defining-the-behaviour-of-the-component"><h3>Step three: Defining the behaviour of the component</h3></a>
+<p>Step three is defining how the state of the component should change when an action is executed.</p>
+<a class="header" href="#implementing-the-component-trait" id="implementing-the-component-trait"><h4>Implementing the <code>Component</code> trait</h4></a>
+<p><code>Counter</code> is a <code>Component</code>, as it describes the state of our application. Therefore, we will implement the <code>Component</code> trait for it.</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+impl Component for Counter {
+    // Define what actions influence this component
+    type Action = CounterAction;
+
+    // The function that applies the action!
+    // This is where the magic happens.
+    fn apply(&amp;mut self, action: &amp;CounterAction) -&gt; Result&lt;Option&lt;Self::Action&gt;, Error&gt; {
+        match action {
+            CounterAction::Increment =&gt; {
+                self.0 += 1;
+                Ok(Some(CounterAction::Decrement))
+            }
+            CounterAction::Decrement =&gt; {
+                self.0 -= 1;
+                Ok(Some(CounterAction::Increment))
+            }
+        }
+    }
+}
+#}</code></pre></pre>
+<p>Note that the apply-function is returning the inverse of the action that was performed. This can be used to 'undo' the action (will be discussed in another tutorial).</p>
+<p>If the action has no effect on the state of the component, the apply function should return <code>None</code>.</p>
+<a class="header" href="#testing-the-counter" id="testing-the-counter"><h3>Testing the counter</h3></a>
+<p>That was all you need for the logic of the counter. Now, let's test it.</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+fn test() -&gt; Result&lt;(), Error&gt; {
+    // Create a new counter with an initial value of 0.
+    let mut counter = Counter(0);
+
+    counter.apply(&amp;CounterAction::Increment)?;
+    assert_eq!(counter.0, 1);
+
+    counter.apply(&amp;CounterAction::Increment)?;
+    assert_eq!(counter.0, 2);
+
+    counter.apply(&amp;CounterAction::Decrement)?;
+    assert_eq!(counter.0, 1);
+    Ok(())
+}
+#}</code></pre></pre>
+<p>It works! You can find the final code from this tutorial <a href="https://github.com/actions-library/actions/blob/master/examples/simple.rs" target="_blank">here</a>.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="chapter_1.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="chapter_2.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a href="chapter_1.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a href="chapter_2.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

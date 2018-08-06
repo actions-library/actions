@@ -3,28 +3,28 @@ use error::ActionsError;
 use std::fmt;
 
 #[derive(Debug)]
-/// An error that occures while reducing.
-pub struct ReduceError(pub Box<dyn stdError>);
+/// An error that occures while applying an action.
+pub struct ApplyError(pub Box<dyn stdError>);
 
-impl fmt::Display for ReduceError {
+impl fmt::Display for ApplyError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ReduceError(ref err) => err.fmt(f),
+        match self {
+            ApplyError(err) => err.fmt(f),
         }
     }
 }
 
-impl stdError for ReduceError {
+impl stdError for ApplyError {
     fn cause(&self) -> Option<&dyn stdError> {
-        match *self {
-            ReduceError(ref err) => Some(err.as_ref())
+        match self {
+            ApplyError(err) => Some(err.as_ref())
         }
     }
 }
 
-/// Reduce is a trait that should be implemented for any datatype that describes the state of your application.
+/// Component is a trait that should be implemented for any datatype that describes the state of your application.
 
-pub trait Reduce<Error: stdError + 'static = ActionsError> {
+pub trait Component<Error: stdError + 'static = ActionsError> {
     /// The type of the action.
     /// The action could be of any type but using an `enum` is encouraged.
     type Action: Clone;
@@ -39,7 +39,7 @@ pub trait Reduce<Error: stdError + 'static = ActionsError> {
     ///
     /// ```
     /// extern crate actions;
-    /// use actions::Reduce;
+    /// use actions::Component;
     /// use actions::Error;
     /// 
     /// #[derive(Clone)]
@@ -53,10 +53,10 @@ pub trait Reduce<Error: stdError + 'static = ActionsError> {
     ///     Decrement,
     /// }
     ///
-    /// impl Reduce for Counter {
+    /// impl Component for Counter {
     ///     type Action = CounterAction;
     ///
-    ///     fn apply_action(&mut self, action: &Self::Action)->Result<Option<Self::Action>,Error>
+    ///     fn apply(&mut self, action: &Self::Action)->Result<Option<Self::Action>,Error>
     ///     {
     ///         let inverse = match action {
     ///             CounterAction::Increment => {
@@ -72,5 +72,5 @@ pub trait Reduce<Error: stdError + 'static = ActionsError> {
     ///     }
     /// }
     /// ```
-    fn apply_action(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error>;
+    fn apply(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error>;
 }
