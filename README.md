@@ -24,7 +24,7 @@ Undo and redo functionality is an essential requirement for a lot of software. U
 > For example, if you are writing an editor for a game-engine. Whenever the user saves, the current chain could be **compressed an stored to the drive** (where size matters). It could then be used to show the differences between saves to the user (the **minimal single actions required to get to the new state**: "You moved this object", etc.).
 
 ## Getting Started
-You can find the tutorials [here!](https://actions-library.github.io/tutorials/).
+You can find the tutorials [here!](https://actions-library.github.io/actions/tutorials/).
 
 ## Please help!
 There are so many ways you can help:
