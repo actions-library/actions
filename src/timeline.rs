@@ -1,169 +1,170 @@
-use action::Merge;
-use chain::Chain;
-use error::ActionsError;
-use component::{Component, ApplyError};
-use std::error::Error;
-use std::fmt;
+use crate::state::{InverseResult, State};
 
-#[derive(Debug)]
-pub enum TimelineError {
-    NothingToUndo,
-    NothingToRedo,
+use std::fmt;
+use std::ops::Deref;
+
+use crate::chain::Chain;
+
+enum Breadcrumb<S: State> {
+    FullCopy(Box<S>),
+    Action(S::Action),
 }
 
-impl Error for TimelineError {}
+/// The `Timeline` wraps around a `State` and makes it accessible by using actions only.
+///
+/// It stores a history of actions, so that actions can be easily undone or redone.
+///
+/// It is **highly recommended** to implement `fn inverse(&self, action)` on the state.
+/// If the inverse function is not implemented, the Timeline will create
+/// a full clone of the state *on the heap* before every action.
+pub struct Timeline<S: State + Clone> {
+    timeline: Vec<(S::Action, Breadcrumb<S>)>,
+    available_undos: usize,
+    current_state: S,
+}
 
-impl fmt::Display for TimelineError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            TimelineError::NothingToUndo => {
-                write!(f, "Nothing to undo: There are no actions left to undo.")
-            }
-            TimelineError::NothingToRedo => {
-                write!(f, "Nothing to redo: There are no actions left to redo.")
-            }
+#[derive(Debug)]
+pub enum TimelineError<E> {
+    NothingToUndo,
+    NothingToRedo,
+    ApplyError(E),
+}
+
+impl<'a, E: fmt::Display> fmt::Display for TimelineError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TimelineError::NothingToUndo => write!(f, "No actions left to undo."),
+            TimelineError::NothingToRedo => write!(f, "No actions left to redo."),
+            TimelineError::ApplyError(e) => write!(f, "Applying action failed: {}", e),
         }
     }
 }
 
-/// Wraps data and makes it accessible by using actions only.
-///
-/// Allows for undoing and redoing.
-pub struct Timeline<T: Component> {
-    item: T,
-    action_stack: Vec<T::Action>,
-    inv_action_stack: Vec<T::Action>,
-    action_index: i32,
-    max_index: i32,
-}
-
-impl<T: Component> Timeline<T> {
-    /// Create a new timeline which wraps an *item*.
+impl<S: State + Clone> Timeline<S>
+where
+    S::Action: Clone,
+{
+    /// Create a new `Timeline` which wraps around an *item*.
     ///
     /// # Arguments
     ///
-    /// - item: A datastructure containing a state.
-    pub fn new(item: T) -> Self {
+    /// - state: A datastructure containing the state.
+    pub fn new(state: S) -> Self {
         Self {
-            item,
-            action_stack: Vec::new(),
-            inv_action_stack: Vec::new(),
-            action_index: -1,
-            max_index: -1,
+            timeline: Vec::new(),
+            current_state: state,
+            available_undos: 0,
         }
+    }
+
+    /// Get a reference to the current state.
+    /// 
+    /// Can be useful to inspect state.
+    pub fn current_state(&self) -> &S {
+        &self.current_state
     }
 
     /// Apply an action.
-    ///
-    /// The action can be undone and redone after applying.
-    ///
-    /// # Arguments
-    /// - action: The action to apply
-    ///
-    /// # Return
-    /// A result containing either an empty `Ok` or an error which occured during applying.
-    pub fn apply(&mut self, action: &T::Action) -> Result<(), ActionsError> {
-        // Increase the index of the current action.
-        let action_inverse = match self.item.apply(action) {
-            Ok(action) => action,
-            Err(e) => return Err(ApplyError(Box::new(e)).into()),
+    pub fn apply<'a>(&mut self, action: <S as State>::Action) -> Result<(), TimelineError<S::Error>>
+    where
+        S: 'a,
+    {
+        let breadcrumb = match self.current_state.inverse(&action) {
+            InverseResult::Action(inverse) => Breadcrumb::Action(inverse),
+            InverseResult::FullCopyRequired => {
+                Breadcrumb::FullCopy(Box::new(self.current_state.clone()))
+            }
         };
 
-        // If a state-change was commited
-        if let Some(inverse) = action_inverse {
-            let current_length = self.action_stack.len() as i32;
-            self.action_index += 1;
+        match self.current_state.apply(&action) {
+            Ok(()) => {
+                assert!(self.timeline.len() >= self.available_undos);
 
-            // println!("applying while the current length is {}", current_length);
-            if self.action_index < current_length {
-                let index = self.action_index as usize;
-                // Overwrite the action currently at that index.
-                self.action_stack[index] = action.clone();
-                // Put the returned inverse onto the rev_action_stack.
-                self.inv_action_stack[index] = inverse;
-            } else {
-                // Push a copy of the action to the action_stack.
-                self.action_stack.push(action.clone());
-                // Push the returned inverse onto the rev_action_stack.
-                self.inv_action_stack.push(inverse);
+                if self.timeline.len() == self.available_undos {
+                    self.timeline.push((action, breadcrumb));
+                } else
+                /*if self.timeline.len() > self.available_undos*/
+                {
+                    self.timeline[self.available_undos] = (action, breadcrumb);
+                    self.timeline.truncate(self.available_undos + 1);
+                }
+
+                self.available_undos += 1;
             }
-
-            // Do not allow to redo past this point.
-            self.max_index = self.action_index;
-        }
+            Err(e) => return Err(TimelineError::ApplyError(e)),
+        };
         Ok(())
     }
 
     /// Apply a chain of commands.
-    /// Undoing undo's the actions in the chain individually.
+    ///
+    /// Undoing undoes the actions in the chain one by one.
     ///
     /// # Return
     /// A result containing either an empty `Ok` or an error.
-    pub fn apply_chain(&mut self, chain: Chain<T::Action>) -> Result<(), ActionsError>
-    where
-        <T as Component>::Action: Merge,
-    {
+    pub fn apply_chain(&mut self, chain: &Chain<S::Action>) -> Result<(), TimelineError<S::Error>> {
         for action in chain.actions() {
-            self.apply(action)?;
+            // TODO: What to do when an error is returned mid-chain??
+            self.apply(action.clone())?;
         }
 
         Ok(())
     }
 
-    /// Undo the last performed action.
+    /// Go one step back in history.
     ///
     /// # Return
-    /// A result containing either an empty `Ok` or an error.
-    ///
-    /// An error can be caused by the reducer throwing an error,
-    /// or because there are no actions to undo.
-    pub fn undo(&mut self) -> Result<(), ActionsError> {
-        if self.action_index == -1 {
-            return Err(TimelineError::NothingToUndo.into());
-        }
-
-        // Get a reference to the undo-action and apply it.
-        let action_undo = &self.inv_action_stack[self.action_index as usize];
-
-        match self.item.apply(action_undo) {
-            Ok(_) => (),
-            Err(err) => return Err(ApplyError(Box::new(err)).into()),
+    /// A result containing either an empty `Ok` or an error if 
+    /// there are no actions left to undo.
+    pub fn undo(&mut self) -> Result<(), TimelineError<S::Error>> {
+        if self.available_undos == 0 {
+            return Err(TimelineError::NothingToUndo);
         };
 
-        self.action_index -= 1;
+        match self.timeline[self.available_undos - 1].1 {
+            Breadcrumb::Action(ref action) => {
+                self.current_state
+                    .apply(&action)
+                    .map_err(TimelineError::ApplyError)?;
+            }
+            Breadcrumb::FullCopy(ref state) => {
+                self.current_state = state.deref().clone();
+            }
+        };
+
+        self.available_undos -= 1;
 
         Ok(())
     }
 
-    /// Redo the action performed after the current action.
-    pub fn redo(&mut self) -> Result<(), ActionsError> {
-        self.action_index += 1;
+    /// Go one step forward in history.
+    ///
+    /// # Return
+    /// A result containing either an empty `Ok` or an error if 
+    /// there are no actions left to redo.
+    pub fn redo(&mut self) -> Result<(), TimelineError<S::Error>> {
+        if self.timeline.len() == self.available_undos {
+            return Err(TimelineError::NothingToRedo);
+        };
 
-        if self.action_index > self.action_stack.len() as i32 {
-            return Err(TimelineError::NothingToRedo.into());
-        }
+        let index = self.timeline.len() - self.available_undos;
 
-        // Get a reference to the redo-action.
-        let action_redo = &self.action_stack[self.action_index as usize];
+        self.current_state
+            .apply(&self.timeline[index].0)
+            .map_err(TimelineError::ApplyError)?;
 
-        match self.item.apply(action_redo) {
-            Ok(_) => Ok(()),
-            Err(err) => Err(ApplyError(Box::new(err)).into()),
-        }
+        self.available_undos += 1;
+
+        Ok(())
     }
 
-    /// The amount of undo-actions that can be performed.
-    pub fn undos_remaining(&self) -> i32 {
-        self.action_index + 1
+    /// Return the number of undo's that can be performed.
+    pub fn undos_remaining(&self) -> usize {
+        self.available_undos
     }
 
-    /// The amount of redo-actions that can be performed.
-    pub fn redos_remaining(&self) -> i32 {
-        self.max_index - self.action_index
-    }
-
-    /// An immutable reference to the current state of the item.
-    pub fn current(&self) -> &T {
-        &self.item
+    /// Return the number of redo's that can be performed.
+    pub fn redos_remaining(&self) -> usize {
+        self.timeline.len() - self.available_undos
     }
 }

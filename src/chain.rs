@@ -1,77 +1,48 @@
-use action::{Merge, MergeResult};
+use crate::merge::{Merge, MergeResult};
 
-// #[derive(Debug)]
-// pub enum ChainError {}
-
-// impl Error for ChainError {}
-
-// impl fmt::Display for ChainError {
-//     fn fmt(&self, _f: &mut fmt::Formatter) -> fmt::Result {
-//         match *self {}
-//     }
-// }
-
-/// A chain of actions.
+#[derive(Clone, Debug)]
+/// A 'chain' of actions.
 ///
-/// Can be used to store 'macros'.
-#[derive(Clone)]
-pub struct Chain<Action>
+/// Represents a number of consecutive actions.
+pub struct Chain<Action: Sized>
 where
-    Action: Merge,
+    Action: Clone,
 {
-    actions: Vec<Action>,
+    chain: Vec<Action>,
 }
 
-impl<Action: Merge> Chain<Action> {
-    /// Create a new chain of actions.
-    ///
-    pub fn new() -> Self {
-        Self {
-            actions: Vec::new(),
-        }
+impl<A: Sized + Clone> Chain<A> {
+    /// Return the underlying vector of actions.
+    pub fn actions(&self) -> &[A] {
+        &self.chain
     }
 
-    /// Merges as much actions in the chain as possible.
+    /// Compress the chain.
     ///
-    /// For example, if the chain contains an action that cancels out the
-    /// previous action, both of the actions can be removed from the chain.
-    pub fn compress(&mut self) {
-        /* 
-            TODO: improve algorithm! Right now, it is more like a proof of concept.
-            The whole content of this function is nasty!
-            
-            Optimizations:
-                - Check for the index of the last 'Overwrites' result first 
-                  (from the back) and start from that index.
-                - Right now the last action is merged but just added. That
-                  is a problem. Imagine this:
-                  100 unmergable actions and 1 overwriting action at the end.
-                  It should merge to 1 action but it doesn't using this
-                  algorithm.
-                - It is ran once now, but it should go over the actions multiple times
-                  and stop if there are no changes made in the last run. Riight?
-                - Other optimizations?
-            And I think there is some performance to gain by better aligningment
-            of the data in memory (cache!) and of course calculating asynchonously.
-        */
-        let length_old = self.actions.len();
+    /// Executing the compressed chain should result in the exact
+    /// same mutation of the data as the original chain.
+    pub fn compress(&mut self)
+    where
+        A: Merge,
+    {
+        let length_old = self.chain.len();
 
         if length_old <= 1 {
             return;
         }
 
-        let mut result: Vec<Option<Action>> = vec![None; length_old];
+        let mut result: Vec<Option<A>> = vec![None; length_old];
         let mut i_write = 0;
         let mut i_read = 0;
 
         while i_read < length_old {
-            let current_action = &self.actions[i_read];
+            let current_action = &self.chain[i_read];
 
             if i_write == 0 {
-                result[i_write] = Some(self.actions[i_read].clone());
+                result[i_write] = Some(self.chain[i_read].clone());
                 i_write += 1;
             } else {
-                match current_action.merge(&result[i_write - 1].clone().unwrap()) {
+                match (*current_action).merge(&result[i_write - 1].clone().unwrap()) {
                     MergeResult::Unmergable => {
                         result[i_write] = Some(current_action.clone());
                         i_write += 1;
@@ -94,41 +65,50 @@ impl<Action: Merge> Chain<Action> {
 
         result.truncate(i_write);
 
-        // println!("Compressed actionchain from {} to {}", length_old, result.len());
-
-        self.actions = result.into_iter().map(|x| x.unwrap()).collect();
+        self.chain = result.into_iter().map(|x| x.unwrap()).collect();
     }
 
-    /// Push an action to the chain.
-    pub fn push(&mut self, action: Action) {
-        self.actions.push(action);
+    /// Return a new empty chain of actions.
+    pub fn new() -> Self {
+        Self { chain: Vec::new() }
     }
 
-    /// The amount of action currently in the chain.
+    /// Return a new empty chain of actions with a specific capacity.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            chain: Vec::with_capacity(capacity),
+        }
+    }
+
+    /// Add an action to the chain.
+    ///
+    /// The action will always be added to the back of the chain.
+    pub fn push(&mut self, action: A) {
+        self.chain.push(action);
+    }
+
+    /// Return the length of the chain (the number of actions it contains).
     pub fn len(&self) -> usize {
-        self.actions.len()
+        self.chain.len()
     }
 
-    /// The actions in the chain.
-    pub fn actions(&self) -> &Vec<Action> {
-        &self.actions
-    }
-}
-
-impl<Action> From<Vec<Action>> for Chain<Action>
-where
-    Action: Merge,
-{
-    fn from(vector: Vec<Action>) -> Chain<Action> {
-        Self { actions: vector }
+    /// Clear the chain.
+    ///
+    /// This will remove any action currenty in the chain.
+    /// After calling this function, the length of the chain will equal 0.
+    pub fn clear(&mut self) {
+        self.chain.clear()
     }
 }
 
-impl<Action> Into<Vec<Action>> for Chain<Action>
-where
-    Action: Merge,
-{
-    fn into(self) -> Vec<Action> {
-        self.actions
+impl<A: Sized + Clone> Into<Vec<A>> for Chain<A> {
+    fn into(self) -> Vec<A> {
+        self.chain
+    }
+}
+
+impl<A: Sized + Clone> From<Vec<A>> for Chain<A> {
+    fn from(vec: Vec<A>) -> Self {
+        Self { chain: vec }
     }
 }

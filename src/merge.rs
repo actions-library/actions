@@ -1,21 +1,21 @@
-/// The result of merging two actions.
-pub enum MergeResult<Action: Merge> {
-    /// The actions are not mergable into one action.
-    Unmergable,
-    /// The actions are merged into one action.
-    Merged(Action),
+/// The result of trying to merge two actions.
+pub enum MergeResult<Action: Sized> {
     /// The action cancels out the effect of the previous action.
     CancelsOut,
-    /// The action fully overwrites the previous action.
+    /// The actions cannot be merged.
+    Unmergable,
+    /// The action fully overwrites the whole state.
     /// In this case, it does not matter how the previous
-    /// action influenced the state.
+    /// action influenced the state. It is overwritten anyway.
     Overwrites,
+    /// The actions are merged into one action.
+    Merged(Action),
 }
 
-/// Trait that enables actions to merge.
+/// Trait that enables actions to merge actions.
 pub trait Merge
 where
-    Self: Sized + Clone
+    Self: Sized,
 {
     /// Merge two actions.
     /// Caution! The order of actions matters!

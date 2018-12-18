@@ -1,21 +1,25 @@
-extern crate actions;
+use actions::State;
+use actions::{Chain, Merge, MergeResult};
 
-use actions::Error;
-use actions::Component;
-use actions::{Merge, MergeResult};
-
-#[derive(Default, Clone)]
+#[derive(Default)]
 struct Counter {
     value: i32,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 enum CounterAction {
     Increment,
     Decrement,
     SetValue(i32),
     Multiply(i32),
     Divide(i32),
+}
+
+#[derive(Debug)]
+enum CounterError {
+    MinValueReached,
+    MaxValueReached,
+    WouldOverflow,
 }
 
 impl Merge for CounterAction {
@@ -25,63 +29,113 @@ impl Merge for CounterAction {
                 CounterAction::Decrement => MergeResult::CancelsOut,
                 _ => MergeResult::Unmergable,
             },
+
             CounterAction::Decrement => match previous {
                 CounterAction::Increment => MergeResult::CancelsOut,
                 _ => MergeResult::Unmergable,
             },
+
+            CounterAction::Divide(value1) => match previous {
+                CounterAction::Divide(value2) => {
+                    MergeResult::Merged(CounterAction::Divide(*value1 * *value2))
+                }
+
+                CounterAction::Multiply(value2) => {
+                    if value2 % value1 == 0 {
+                        MergeResult::Merged(CounterAction::Multiply(*value2 / *value1))
+                    } else {
+                        MergeResult::Unmergable
+                    }
+                }
+                _ => MergeResult::Unmergable,
+            },
+
+            CounterAction::Multiply(1) => MergeResult::Merged(previous.clone()),
+
+            CounterAction::Multiply(value1) => match previous {
+                CounterAction::Multiply(value2) => {
+                    MergeResult::Merged(CounterAction::Multiply(value1 * value2))
+                }
+                CounterAction::Divide(value2) => {
+                    if value1 % value2 == 0 {
+                        MergeResult::Merged(CounterAction::Multiply(*value1 / *value2))
+                    } else {
+                        MergeResult::Unmergable
+                    }
+                }
+                _ => MergeResult::Unmergable,
+            },
+
             CounterAction::SetValue(_) => MergeResult::Overwrites,
-            CounterAction::Multiply(val) => match previous {
-                CounterAction::Multiply(prev_val) => MergeResult::Merged(CounterAction::Multiply(prev_val * val)),
-                CounterAction::Divide(prev_val) => MergeResult::Merged(CounterAction::Multiply(prev_val / val)),
-                _ => MergeResult::Unmergable
-            }
-            _ => MergeResult::Unmergable,
         }
     }
 }
 
-impl Component for Counter {
+impl State for Counter {
     type Action = CounterAction;
+    type Error = CounterError;
 
-    fn apply(&mut self, action: &Self::Action) -> Result<Option<Self::Action>, Error> {
-        let inverse = match action {
+    fn apply(&mut self, action: &CounterAction) -> Result<(), CounterError> {
+        match action {
             CounterAction::Increment => {
+                if self.value == <i32>::max_value() {
+                    return Err(CounterError::MaxValueReached);
+                }
                 self.value += 1;
-                Some(CounterAction::Decrement)
             }
             CounterAction::Decrement => {
+                if self.value == <i32>::min_value() {
+                    return Err(CounterError::MinValueReached);
+                }
                 self.value -= 1;
-                Some(CounterAction::Increment)
             }
-            CounterAction::SetValue(val) => {
-                let old_value = self.value;
-                self.value = *val;
-                Some(CounterAction::SetValue(old_value))
+            CounterAction::SetValue(v) => {
+                self.value = *v;
             }
-            CounterAction::Multiply(val) => {
-                self.value *= val;
-                Some(CounterAction::Divide(*val))
+            CounterAction::Divide(v) => {
+                self.value /= v;
             }
-            CounterAction::Divide(val) => {
-                self.value /= val;
-                Some(CounterAction::Multiply(*val))
+            CounterAction::Multiply(v) => {
+                // Check for overflow
+                match self.value.checked_mul(*v) {
+                    Some(new_value) => self.value = new_value,
+                    None => {
+                        return Err(CounterError::WouldOverflow);
+                    }
+                };
             }
-        };
-        Ok(inverse)
+        }
+
+        Ok(())
     }
 }
 
-fn manipulate_counter() -> Result<(), Error> {
-    let mut c = Counter::default();
-    c.apply(&CounterAction::SetValue(5))?;
-    c.apply(&CounterAction::Increment)?;
-    c.apply(&CounterAction::Increment)?;
-    c.apply(&CounterAction::Decrement)?;
-    assert_eq!(c.value, 6);
+fn merge_actions() -> Result<(), CounterError> {
+    let mut chain = Chain::with_capacity(10);
+
+    chain.push(CounterAction::SetValue(5));
+    chain.push(CounterAction::Increment);
+    chain.push(CounterAction::Decrement);
+    chain.push(CounterAction::Multiply(2));
+    chain.push(CounterAction::Multiply(2));
+    chain.push(CounterAction::Divide(4));
+
+    println!(
+        "Length of chain before compressing (merging actions): {}",
+        chain.len()
+    );
+
+    chain.compress();
+    chain.compress();
+
+    println!("Length of chain after compressing: {}", chain.len());
+    println!("Chain: {:#?}", chain);
 
     Ok(())
 }
 
 fn main() {
-    manipulate_counter().unwrap();
+    if let Err(e) = merge_actions() {
+        eprintln!("Error: {:?}", e);
+    }
 }
