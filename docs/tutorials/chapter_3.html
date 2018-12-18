@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Chapter 3 - Merging actions - </title>
+        <title>Chapter 3 - Undo and redo - </title>
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -72,7 +72,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> What are actions?</a></li><li><ol class="section"><li><a href="example_1.html"><strong aria-hidden="true">1.1.</strong> Example: Counter</a></li></ol></li><li><a href="chapter_2.html"><strong aria-hidden="true">2.</strong> Chapter 2 - A chain of actions</a></li><li><a href="chapter_3.html" class="active"><strong aria-hidden="true">3.</strong> Chapter 3 - Merging actions</a></li></ol>
+            <ol class="chapter"><li><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> What are actions?</a></li><li><ol class="section"><li><a href="example_1.html"><strong aria-hidden="true">1.1.</strong> Example: Counter</a></li></ol></li><li><a href="chapter_2.html"><strong aria-hidden="true">2.</strong> Chapter 2 - A chain of actions</a></li><li><a href="chapter_3.html" class="active"><strong aria-hidden="true">3.</strong> Chapter 3 - Undo and redo</a></li><li><a href="chapter_4.html"><strong aria-hidden="true">4.</strong> Chapter 4 - Merging actions</a></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -136,70 +136,9 @@
 
                 <div id="content" class="content">
                     <main>
-                        <a class="header" href="#chapter-3-merging-actions" id="chapter-3-merging-actions"><h1>Chapter 3: Merging actions</h1></a>
-<p>Imagine for example this scenario.</p>
-<p>You have got a very simple program. A counter.
-The user can enter an operation (increment or decrement) an a value. The user could, for example say: <em>increment</em> the counter by <em>5</em>. Then the user decrements the counter by <em>4</em>. Lastly, the user performs an <em>increment</em> of <em>3</em>.</p>
-<p>We can use an enum to represent those actions.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-enum MyAction {
-    Add(u8),
-    Subtract(u8)
-}
-#}</code></pre></pre>
-<p>But the user is not satisfied. The user wants to automate this time-consuming process. Simple!</p>
-<p>We just <strong>record the actions and store them</strong>. If the user wants to perform all 3 actions, the user can just press one button to perform all 3 actions. They will be executed sequentially.</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-let actions = vec![
-    MyAction::Add(5),
-    MyAction::Subtract(4),
-    MyAction::Add(3)
-];
-#}</code></pre></pre>
-<p>&quot;<strong>That is dumb, it could just be 1 single action</strong>&quot;, you say? Yes it is dumb. That is why <code>actions</code> enables you to merge actions by creating a <code>Chain</code> of actions. <strong>You provide the merge-logic</strong>. This is how that would look like for our example:</p>
-<pre><pre class="playpen"><code class="language-rust">
-# #![allow(unused_variables)]
-#fn main() {
-impl Merge for Action {
-    fn merge(&amp;self, previous: &amp;MyAction) -&gt; MergeResult&lt;Self&gt; {
-        match self {
-            // If the current action is incrementing by val
-            MyAction::Add(val) =&gt; match previous {
-                // If the previous action was decrementing by val2
-                MyAction::Subtract(val2) =&gt; 
-                    // Then return a new 'merged' action which
-                    // increments by (val - val2)
-                    MergeResult::Merged(
-                        MyAction::Add(val - val2)
-                    ),
-                // Etc..
-                MyAction::IncrementBy(val2) =&gt;
-                    MergeResult::Merged(
-                        MyAction::Add(val + val2)
-                    ),
-            },
-
-            MyAction::DecrementBy(val) =&gt; match previous {
-                MyAction::IncrementBy(val2) =&gt;
-                    MergeResult::Merged(
-                        MyAction::Add(val2 - val)
-                    ),
-                
-                MyAction::DecrementBy(val2) =&gt;
-                    MergeResult::Merged(
-                        MyAction::Subtract(val + val2)
-                    )
-            },
-        }
-    }
-}
-#}</code></pre></pre>
-<p><strong>Please note that this merge is not the optimal solution</strong>, because it is possible to end up with either <code>CounterAction::Add(0)</code> or <code>CounterAction::Subtract(0)</code>, which could be entirely removed.</p>
-<p>To solve that issue, you can return other <code>MergeResult</code>s. You can return <code>MergeResult::CancelsOut</code>, for example. You can read more about the different <code>MergeResult</code>s in the documentation.</p>
+                        <a class="header" href="#chapter-3---undo-and-redo" id="chapter-3---undo-and-redo"><h1>Chapter 3 - Undo and Redo</h1></a>
+<p>TODO.</p>
+<p>For now, please refer to <a href="https://github.com/actions-library/actions/blob/master/examples/simple.rs" target="_blank">the timeline example</a>.</p>
 
                     </main>
 
@@ -211,6 +150,10 @@ impl Merge for Action {
                             </a>
                         
 
+                        
+                            <a rel="next" href="chapter_4.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -225,6 +168,10 @@ impl Merge for Action {
                     </a>
                 
 
+                
+                    <a href="chapter_4.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
                 
             </nav>
 

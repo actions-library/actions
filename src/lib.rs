@@ -13,19 +13,17 @@
 //! - **Undo** and **redo** actions!
 //! - Create *macro's* which merge multiple actions into one chain of actions!
 
-mod error;
-pub use error::ActionsError as Error;
-
-/// A component describes (a part of) the state of a program at any given moment in time.
-mod component;
-pub use component::Component;
-
-mod timeline;
-pub use timeline::Timeline;
-
-/// An action is a datastructure that describes how a state should change internally.
-mod action;
-pub use action::{Merge, MergeResult};
+mod merge;
+pub use self::merge::{Merge, MergeResult};
 
 mod chain;
-pub use chain::Chain;
+pub use self::chain::Chain;
+
+mod error;
+pub use self::error::Error;
+
+mod state;
+pub use self::state::{InverseResult, State};
+
+mod timeline;
+pub use self::timeline::Timeline;

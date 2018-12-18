@@ -72,7 +72,7 @@
         </script>
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
-            <ol class="chapter"><li><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> What are actions?</a></li><li><ol class="section"><li><a href="example_1.html" class="active"><strong aria-hidden="true">1.1.</strong> Example: Counter</a></li></ol></li><li><a href="chapter_2.html"><strong aria-hidden="true">2.</strong> Chapter 2 - A chain of actions</a></li><li><a href="chapter_3.html"><strong aria-hidden="true">3.</strong> Chapter 3 - Merging actions</a></li></ol>
+            <ol class="chapter"><li><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> What are actions?</a></li><li><ol class="section"><li><a href="example_1.html" class="active"><strong aria-hidden="true">1.1.</strong> Example: Counter</a></li></ol></li><li><a href="chapter_2.html"><strong aria-hidden="true">2.</strong> Chapter 2 - A chain of actions</a></li><li><a href="chapter_3.html"><strong aria-hidden="true">3.</strong> Chapter 3 - Undo and redo</a></li><li><a href="chapter_4.html"><strong aria-hidden="true">4.</strong> Chapter 4 - Merging actions</a></li></ol>
         </nav>
 
         <div id="page-wrapper" class="page-wrapper">
@@ -138,95 +138,106 @@
                     <main>
                         <a class="header" href="#counter" id="counter"><h1>Counter</h1></a>
 <p>This tutorial will introduce the two most important concepts of the <code>actions</code> library:</p>
-<p>A <strong>component</strong> describes (a part) of the state of an application.<br>
+<p>A <strong>State</strong> describes (a part) of the state of an application.<br>
 <strong>Actions</strong> describe how the state of an application should change.</p>
 <a class="header" href="#some-setup" id="some-setup"><h4>Some setup</h4></a>
 <p>First make sure you are using the <code>actions</code> crate. Make sure to have <code>actions</code> as a dependency in your <code>Cargo.toml</code> file. If you are unfamiliar with Cargo, check out the <a href="https://doc.rust-lang.org/cargo/index.html">Cargo book</a>).</p>
 <pre><code class="language-toml">[dependencies]
-actions = &quot;0.0.2&quot;
+actions = &quot;0.2.0&quot;
 </code></pre>
-<p>Then make sure to specify <code>actions</code> as a dependency in your project, and import the <code>Component</code> trait. We will also need action's <code>Error</code>.</p>
+<p>Then make sure to specify <code>actions</code> as a dependency in your project, and import the <code>State</code> trait.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-extern crate actions;
-
-use actions::Component;
-use actions::Error;
+use actions::State;
 #}</code></pre></pre>
 <a class="header" href="#building-the-counter" id="building-the-counter"><h2>Building the counter</h2></a>
 <p>One of the easiest examples for explaining <code>actions</code> is a counter. The counter has two buttons: an decrement button, and an increment button.</p>
 <p><img src="./counter.svg" style="width:100%" alt="An example of what a counter in an application might look like"></img></p>
 <p>Our task is to write the logic for the counter. Easy!</p>
-<a class="header" href="#step-one-defining-the-component" id="step-one-defining-the-component"><h3>Step one: Defining the component</h3></a>
+<a class="header" href="#step-one-defining-the-state" id="step-one-defining-the-state"><h3>Step one: Defining the State</h3></a>
 <p>One of the most important aspect of the counter is storing the value displayed in the counter. We will use an integer to store the value.</p>
 <p>As the counter holds just one value, it can be described like this:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-struct Counter(i32);
+struct Counter(u32);
 #}</code></pre></pre>
-<a class="header" href="#step-two-the-actions" id="step-two-the-actions"><h3>Step two: The actions</h3></a>
+<a class="header" href="#step-two-defining-the-actions" id="step-two-defining-the-actions"><h3>Step two: Defining the actions</h3></a>
 <p>Maybe even more important than the counter are the two buttons.</p>
 <p>The decrement button should decrement the counter by 1, and the increment button should increment the counter by 1.</p>
-<p>Incrementing and decrementing are <strong>actions</strong>. It is immediately clear how executing those actions influences the <strong>component</strong> and therefore the state of the application.</p>
+<p>Incrementing and decrementing are <strong>actions</strong>. It is immediately clear how executing those actions influences the <strong>State</strong> and therefore the state of the application.</p>
 <p>Let's convert these actions into Rust-code.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-#[derive(Clone)]
 enum CounterAction {
     Increment,
     Decrement,
 }
 #}</code></pre></pre>
 <p>That's it! You've defined your actions.</p>
-<a class="header" href="#step-three-defining-the-behaviour-of-the-component" id="step-three-defining-the-behaviour-of-the-component"><h3>Step three: Defining the behaviour of the component</h3></a>
-<p>Step three is defining how the state of the component should change when an action is executed.</p>
-<a class="header" href="#implementing-the-component-trait" id="implementing-the-component-trait"><h4>Implementing the <code>Component</code> trait</h4></a>
-<p><code>Counter</code> is a <code>Component</code>, as it describes the state of our application. Therefore, we will implement the <code>Component</code> trait for it.</p>
+<a class="header" href="#step-three-defining-the-behaviour-of-the-state" id="step-three-defining-the-behaviour-of-the-state"><h3>Step three: Defining the behaviour of the State</h3></a>
+<p>Step three is defining how the state of the State should change when an action is executed.</p>
+<a class="header" href="#handling-errors" id="handling-errors"><h4>Handling errors</h4></a>
+<p>To make sure the counter does not go past the maximum or minimum value, we will return an eror if it would. Errors are easily represented using an enum:</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-impl Component for Counter {
-    // Define what actions influence this component
+enum CounterError {
+    MinValueReached,
+    MaxValueReached,
+}
+#}</code></pre></pre>
+<p>We will use this error-type later.</p>
+<a class="header" href="#implementing-the-state-trait" id="implementing-the-state-trait"><h4>Implementing the <code>State</code> trait</h4></a>
+<p><code>Counter</code> is a <code>State</code>, as it describes the state of our application. Therefore, we will implement the <code>State</code> trait for it.</p>
+<pre><pre class="playpen"><code class="language-rust">
+# #![allow(unused_variables)]
+#fn main() {
+impl State for Counter {
+    // Define what actions influence this State
     type Action = CounterAction;
+    type Error = CounterError;
 
     // The function that applies the action!
-    // This is where the magic happens.
-    fn apply(&amp;mut self, action: &amp;CounterAction) -&gt; Result&lt;Option&lt;Self::Action&gt;, Error&gt; {
+    fn apply(&amp;mut self, action: &amp;CounterAction) -&gt; Result&lt;(), CounterError&gt; {
         match action {
-            CounterAction::Increment =&gt; {
-                self.0 += 1;
-                Ok(Some(CounterAction::Decrement))
-            }
-            CounterAction::Decrement =&gt; {
-                self.0 -= 1;
-                Ok(Some(CounterAction::Increment))
-            }
-        }
+            CounterAction::Increment =&gt; match self.0.checked_add(1) {
+                Some(new_value) =&gt; self.0 = new_value,
+                None =&gt; Err(CounterError::MaxValueReached)?,
+            },
+            CounterAction::Decrement =&gt; match self.0.checked_sub(1) {
+                Some(new_value) =&gt; self.0 = new_value,
+                None =&gt; Err(CounterError::MinValueReached)?,
+            },
+        };
+        Ok(())
     }
 }
 #}</code></pre></pre>
 <p>Note that the apply-function is returning the inverse of the action that was performed. This can be used to 'undo' the action (will be discussed in another tutorial).</p>
-<p>If the action has no effect on the state of the component, the apply function should return <code>None</code>.</p>
+<p>If the action has no effect on the state of the State, the apply function should return <code>None</code>.</p>
 <a class="header" href="#testing-the-counter" id="testing-the-counter"><h3>Testing the counter</h3></a>
 <p>That was all you need for the logic of the counter. Now, let's test it.</p>
 <pre><pre class="playpen"><code class="language-rust">
 # #![allow(unused_variables)]
 #fn main() {
-fn test() -&gt; Result&lt;(), Error&gt; {
+fn test() -&gt; Result&lt;(), CounterError&gt; {
     // Create a new counter with an initial value of 0.
     let mut counter = Counter(0);
 
     counter.apply(&amp;CounterAction::Increment)?;
-    assert_eq!(counter.0, 1);
-
     counter.apply(&amp;CounterAction::Increment)?;
-    assert_eq!(counter.0, 2);
+    counter.apply(&amp;CounterAction::Decrement)?;
+    assert_eq!(1, counter.0);
 
     counter.apply(&amp;CounterAction::Decrement)?;
-    assert_eq!(counter.0, 1);
+
+    // This should cause our own error message to be printed,
+    // because the counter uses an unsigned integer (cannot be negative).
+    counter.apply(&amp;CounterAction::Decrement)?;
+
     Ok(())
 }
 #}</code></pre></pre>

@@ -2,7 +2,6 @@
 [![Latest Version](https://img.shields.io/crates/v/actions.svg)](https://crates.io/crates/actions)
 [![Actions](https://docs.rs/actions/badge.svg)](https://docs.rs/actions/)
 [![License](https://img.shields.io/crates/l/actions.svg)](https://raw.githubusercontent.com/actions-library/actions/master/LICENSE)
-[![dependency status](https://deps.rs/repo/github/actions-library/actions/status.svg)](https://deps.rs/repo/github/actions-library/actions)
 
 Beware, this library is pretty beta right now.
 See it as a proof of concept at this stage.

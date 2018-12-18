@@ -1,10 +1,9 @@
-extern crate actions;
-
 mod helpers;
-use helpers::counter::*;
+use crate::helpers::counter::*;
 
 use actions::Timeline;
 
+#[derive(Debug)]
 enum Perform {
     Action(CounterAction),
     Undo,
@@ -13,13 +12,15 @@ enum Perform {
 
 /// Perform a change (Action, Undo or Redo) and check (after the change was Performed)
 /// if the value of the counter is equal to the expected value.
-fn change_and_expect(t: &mut Timeline<Counter>, perform: Perform, expected_value: i32) {
+fn change_and_expect(t: &mut Timeline<Counter>, perform: Perform, expected_value: u32) {
+    let tmp = t.current_state().0;
+
     match perform {
-        Perform::Action(action) => t.apply(&action).unwrap(),
+        Perform::Action(ref action) => t.apply(action.clone()).unwrap(),
         Perform::Undo => t.undo().unwrap(),
         Perform::Redo => t.redo().unwrap(),
     };
-    assert_eq!(t.current().value, expected_value);
+    assert_eq!(t.current_state().0, expected_value, "Expected the counter to have a value of \"{}\" after performing {:?}. (previous value was {})", expected_value, perform, tmp);
 }
 
 #[test]
@@ -73,7 +74,7 @@ fn timeline_undo_2() {
         (Perform::Undo, 1),
         (Perform::Undo, 0),
         // Should fail because there is no action to be undone
-        (Perform::Undo, -1),
+        (Perform::Undo, 0),
     ];
 
     for (action, expected_value) in test_values {
@@ -125,7 +126,7 @@ fn timeline_redos_remaining() {
         (Perform::Action(CounterAction::Increment), 1),
         (Perform::Action(CounterAction::Increment), 2),
         (Perform::Action(CounterAction::Increment), 3),
-        (Perform::Action(CounterAction::SetValue(-5)), -5),
+        (Perform::Action(CounterAction::SetValue(5)), 5),
         (Perform::Undo, 3),
         (Perform::Undo, 2),
         (Perform::Undo, 1),

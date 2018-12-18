@@ -1,12 +1,10 @@
-extern crate actions;
-extern crate rand;
 use rand::distributions::Standard;
 use rand::prelude::{thread_rng, Distribution, Rng};
 
 use std::panic::catch_unwind;
 
 mod helpers;
-use helpers::counter::*;
+use crate::helpers::counter::*;
 
 use actions::Chain;
 use actions::Timeline;
@@ -36,8 +34,8 @@ fn compress_and_compare(chain: Chain<CounterAction>) {
     match catch_unwind(|| {
         // Apply compressed chain on a new timeline.
         let mut timeline = Timeline::new(Counter::default());
-        timeline.apply_chain(chain2.clone()).unwrap();
-        timeline.current().value
+        timeline.apply_chain(&chain2).unwrap();
+        timeline.current_state().0
     }) {
         Ok(result) => result_uncompressed = result,
         Err(_) => error_compressed = true,
@@ -46,24 +44,26 @@ fn compress_and_compare(chain: Chain<CounterAction>) {
     match catch_unwind(|| {
         let mut timeline = Timeline::new(Counter::default());
         // Apply not-compressed chain on a new timeline.
-        timeline.apply_chain(chain).unwrap();
-        timeline.current().value
+        timeline.apply_chain(&chain).unwrap();
+        timeline.current_state().0
     }) {
         Ok(result) => result_compressed = result,
         Err(_) => error_uncompressed = true,
     }
 
     // This is a bit nasty. It simply throws away the test if any of the two tests panic.
+    // TODO: This should not be needed anymore since errors are used??
     if error_compressed || error_uncompressed {
-        println!("At least one of the executing chains caused a panic! Ignoring this compressiontest.");
+        println!(
+            "At least one of the executing chains caused a panic! Ignoring this compressiontest."
+        );
         return;
     }
     assert_eq!(result_uncompressed, result_compressed, "The results of executing the uncompressed chain (left) and executing the compressed chain (right) are different.\n\nUNCOMPRESSED CHAIN:\n{}\n\nCOMPRESSED_CHAIN:\n{}\n\n", chain_debugstring, chain2_debugstring);
 }
 
-
 /// Generate a chain with a length between len_min and len_max and test
-/// if the result with the compressed chain is equal to the result 
+/// if the result with the compressed chain is equal to the result
 /// with the uncompressed chain.
 fn chain_compression_generated(len_min: usize, len_max: usize) {
     // random number generator.
@@ -82,7 +82,6 @@ fn chain_compression_generated(len_min: usize, len_max: usize) {
     // There we go!
     compress_and_compare(chain.into());
 }
-
 
 #[test]
 fn chain_new() {
@@ -149,7 +148,6 @@ fn chain_compression_generated_short() {
     }
 }
 
-
 #[test]
 /// Test compression for large random-generated chains
 fn chain_compression_generated_long() {
@@ -157,7 +155,6 @@ fn chain_compression_generated_long() {
         chain_compression_generated(0, 100);
     }
 }
-
 
 #[test]
 /// If the last item is overwriting, the chain should
